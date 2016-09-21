@@ -1,6 +1,13 @@
 package eliasgammacoding;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.BitSet;
+import java.util.stream.Stream;
 
 public class EliasGammaCoding {
 
@@ -23,6 +30,7 @@ public class EliasGammaCoding {
             if (n == 1) {
                 codigo.set(1);
             }
+            return codigo;
         }
 
         int p1 = (int) (Math.log(n) / Math.log(2));
@@ -44,6 +52,9 @@ public class EliasGammaCoding {
     }
 
     public static int egSize(int n) {
+        if (n == 0 || n == 1) {
+            return 2;
+        }
         return (int) (Math.log(n) / Math.log(2)) * 2 + 1;
     }
 
@@ -70,12 +81,49 @@ public class EliasGammaCoding {
         return n;
     }
 
-    public static void main(String[] args) {
-        int n = 50;
-        BitSet codigo = egEncode(n);
-        int tamanho = egSize(n);
-        System.out.println(bitSetSequence(codigo, tamanho));
-        System.out.println(egDecode(codigo));
-    }
+    public static void main(String[] args) throws IOException {
+        Path teste = Paths.get(new File("C://leia/teste.txt").getAbsolutePath());
+        Stream<String> linhas = Files.lines(teste);
+        
+        String dadosArquivo = "";
+        for (Object linha : linhas.toArray()) {
+            dadosArquivo += linha.toString();
+        }
 
+        int i, d, t, p = 0;
+        BitSet bsD = new BitSet(), bsEAN = new BitSet();
+
+        for (i = 0; i < dadosArquivo.length(); i++) {
+            d = dadosArquivo.charAt(i) - '0';
+            bsD = egEncode(d);
+            t = egSize(d);
+            for (int j = 0; j < t; j++) {
+                bsEAN.set(p, bsD.get(j));
+                p++;
+            }
+        }
+
+        File encode = new File("C://leia//encode.txt");
+        FileOutputStream in = new FileOutputStream(encode);
+        in.write(bsEAN.toByteArray());
+
+        int q = 0, j;
+        String novaEAN = "";
+        while (q < p) {
+            bsD = new BitSet();
+            j = bsEAN.nextSetBit(q) - q;
+            if (j == 0) {
+                t = 2;
+            } else {
+                t = j * 2 + 1;
+            }
+            for (int k = 0; k < t; k++) {
+                bsD.set(k, bsEAN.get(q + k));
+            }
+            q += t;
+            d = egDecode(bsD);
+            novaEAN += d;
+        }
+        System.out.println(novaEAN);
+    }
 }
