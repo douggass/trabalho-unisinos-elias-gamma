@@ -7,9 +7,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.Stream;
+import static jdk.nashorn.internal.objects.NativeArray.map;
 
 public class EliasGammaCoding {
 
@@ -83,6 +87,32 @@ public class EliasGammaCoding {
         return n;
     }
 
+    private static Map criarAlfabeto(String caracteres) {
+        Map<Integer, Integer> alfabeto = new HashMap<Integer, Integer>();
+        int d;
+        for (int i = 0; i < caracteres.length(); i++) {
+            d = ((int) caracteres.charAt(i));
+            int cont = 1;
+            if (alfabeto.containsKey(d)) {
+                cont = alfabeto.get(d) + 1;
+            }
+            alfabeto.put(d, cont);
+        }
+        ValueComparator alf = new ValueComparator(alfabeto);
+        TreeMap<Integer, Integer> sorted_map = new TreeMap<Integer, Integer>(alf);
+        sorted_map.putAll(alfabeto);
+
+        Map<Integer, Integer> result = new HashMap<Integer, Integer>();
+        int representation = 0;
+
+        for (Map.Entry<Integer, Integer> entry : sorted_map.entrySet()) {
+            Integer k = entry.getKey();
+            result.put(k, representation);
+            representation++;
+        }
+        return result;
+    }
+
     public static void main(String[] args) throws IOException {
         Path teste = Paths.get(new File("C://leia/teste.txt").getAbsolutePath());
         Stream<String> linhas = Files.lines(teste);
@@ -94,25 +124,16 @@ public class EliasGammaCoding {
 
         int i, d, t, p = 0;
         BitSet bsD = new BitSet(), bsEAN = new BitSet();
-        Map<Integer, Integer> alfabeto = new HashMap<Integer, Integer>();
+
+        Map<Integer, Integer> alfabeto = criarAlfabeto(dadosArquivo);
+        System.out.println(alfabeto);
 
         for (i = 0; i < dadosArquivo.length(); i++) {
-            d = ((int) dadosArquivo.charAt(i));
-            int cont = 1;
-            if (alfabeto.containsKey(d)) {
-                cont = alfabeto.get(d) + 1;
-            }
-            alfabeto.put(d, cont);
+            Integer k = (int) dadosArquivo.charAt(i);
+            d = alfabeto.get(k);
 
             bsD = egEncode(d);
             t = egSize(d);
-
-            System.out.println(d);
-            System.out.println(alfabeto);
-            System.out.println(dadosArquivo.charAt(i));
-            System.out.println(bitSetSequence(bsD, t));
-            System.out.println((char) d);
-
             for (int j = 0; j < t; j++) {
                 bsEAN.set(p, bsD.get(j));
                 p++;
@@ -124,7 +145,7 @@ public class EliasGammaCoding {
         in.write(bsEAN.toByteArray());
 
         int q = 0, j;
-        String novaEAN = "";
+        String novaString = "";
         while (q < p) {
             bsD = new BitSet();
             j = bsEAN.nextSetBit(q) - q;
@@ -138,8 +159,35 @@ public class EliasGammaCoding {
             }
             q += t;
             d = egDecode(bsD);
-            novaEAN += d;
+
+            for (Map.Entry<Integer, Integer> entry : alfabeto.entrySet()) {
+                int k = entry.getKey();
+                Integer v = entry.getValue();
+                if (v == d) {
+                    novaString += (char) k;
+                    break;
+                }
+            }
         }
-        System.out.println(novaEAN);
+        System.out.println(novaString);
     }
+
+    static class ValueComparator implements Comparator<Integer> {
+
+        Map<Integer, Integer> base;
+
+        public ValueComparator(Map<Integer, Integer> base) {
+            this.base = base;
+        }
+
+        public int compare(Integer a, Integer b) {
+            if (base.get(a) >= base.get(b)) {
+                return -1;
+            } else {
+                return 1;
+            }
+        }
+
+    }
+
 }
