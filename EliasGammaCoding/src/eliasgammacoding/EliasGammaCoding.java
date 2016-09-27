@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 public class EliasGammaCoding {
@@ -84,7 +86,7 @@ public class EliasGammaCoding {
     public static void main(String[] args) throws IOException {
         Path teste = Paths.get(new File("C://leia/teste.txt").getAbsolutePath());
         Stream<String> linhas = Files.lines(teste);
-        
+
         String dadosArquivo = "";
         for (Object linha : linhas.toArray()) {
             dadosArquivo += linha.toString();
@@ -92,18 +94,32 @@ public class EliasGammaCoding {
 
         int i, d, t, p = 0;
         BitSet bsD = new BitSet(), bsEAN = new BitSet();
+        Map<Integer, Integer> alfabeto = new HashMap<Integer, Integer>();
 
         for (i = 0; i < dadosArquivo.length(); i++) {
-            d = dadosArquivo.charAt(i) - '0';
+            d = ((int) dadosArquivo.charAt(i));
+            int cont = 1;
+            if (alfabeto.containsKey(d)) {
+                cont = alfabeto.get(d) + 1;
+            }
+            alfabeto.put(d, cont);
+
             bsD = egEncode(d);
             t = egSize(d);
+
+            System.out.println(d);
+            System.out.println(alfabeto);
+            System.out.println(dadosArquivo.charAt(i));
+            System.out.println(bitSetSequence(bsD, t));
+            System.out.println((char) d);
+
             for (int j = 0; j < t; j++) {
                 bsEAN.set(p, bsD.get(j));
                 p++;
             }
         }
 
-        File encode = new File("C://leia//encode.txt");
+        File encode = new File("C://leia//encode");
         FileOutputStream in = new FileOutputStream(encode);
         in.write(bsEAN.toByteArray());
 
