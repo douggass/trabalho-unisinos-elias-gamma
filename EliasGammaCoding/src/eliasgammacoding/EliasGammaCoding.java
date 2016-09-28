@@ -10,12 +10,13 @@ import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Stream;
-import static jdk.nashorn.internal.objects.NativeArray.map;
 
 public class EliasGammaCoding {
+
+    static final String PATH_ARQUIVO_CODIFICADO = "C://leia//encode";
+    static final String PATH_ARQUIVO_NAO_CODIFICADO = "C://leia//teste.txt";
 
     public static String bitSetSequence(BitSet bs, int t) {
         String s = "";
@@ -114,7 +115,7 @@ public class EliasGammaCoding {
     }
 
     public static void main(String[] args) throws IOException {
-        Path teste = Paths.get(new File("C://leia/teste.txt").getAbsolutePath());
+        Path teste = Paths.get(new File(PATH_ARQUIVO_NAO_CODIFICADO).getAbsolutePath());
         Stream<String> linhas = Files.lines(teste);
 
         String dadosArquivo = "";
@@ -140,22 +141,27 @@ public class EliasGammaCoding {
             }
         }
 
-        File encode = new File("C://leia//encode");
+        File encode = new File(PATH_ARQUIVO_CODIFICADO);
         FileOutputStream in = new FileOutputStream(encode);
         in.write(bsEAN.toByteArray());
 
+        /*File dicionario = new File("C://leia//dicionario");
+        FileOutputStream inD = new FileOutputStream(dicionario);*/
+        //inD.write(alfabeto.toByteArray());
+        byte[] ans = Files.readAllBytes(Paths.get(encode.getAbsolutePath()));
+        BitSet newBS = BitSet.valueOf(ans);
         int q = 0, j;
         String novaString = "";
-        while (q < p) {
+        while (q < newBS.length()) {
             bsD = new BitSet();
-            j = bsEAN.nextSetBit(q) - q;
+            j = newBS.nextSetBit(q) - q;
             if (j == 0) {
                 t = 2;
             } else {
                 t = j * 2 + 1;
             }
             for (int k = 0; k < t; k++) {
-                bsD.set(k, bsEAN.get(q + k));
+                bsD.set(k, newBS.get(q + k));
             }
             q += t;
             d = egDecode(bsD);
