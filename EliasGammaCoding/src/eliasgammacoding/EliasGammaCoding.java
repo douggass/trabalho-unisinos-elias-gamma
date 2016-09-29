@@ -1,6 +1,7 @@
 package eliasgammacoding;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ public class EliasGammaCoding {
 
     static final String PATH_ARQUIVO_CODIFICADO = "C://leia//encode";
     static final String PATH_ARQUIVO_NAO_CODIFICADO = "C://leia//teste.txt";
+    static final String PATH_ARQUIVO_CODIFICADO_DICIONARIO = "C://leia//dicionario";
 
     public static String bitSetSequence(BitSet bs, int t) {
         String s = "";
@@ -116,12 +118,7 @@ public class EliasGammaCoding {
 
     public static void main(String[] args) throws IOException {
         Path teste = Paths.get(new File(PATH_ARQUIVO_NAO_CODIFICADO).getAbsolutePath());
-        Stream<String> linhas = Files.lines(teste);
-
-        String dadosArquivo = "";
-        for (Object linha : linhas.toArray()) {
-            dadosArquivo += linha.toString();
-        }
+        String dadosArquivo = lerArquivo(teste);
 
         int i, d, t, p = 0;
         BitSet bsD = new BitSet(), bsEAN = new BitSet();
@@ -145,12 +142,15 @@ public class EliasGammaCoding {
         FileOutputStream in = new FileOutputStream(encode);
         in.write(bsEAN.toByteArray());
 
-        /*File dicionario = new File("C://leia//dicionario");
-        FileOutputStream inD = new FileOutputStream(dicionario);*/
-        //inD.write(alfabeto.toByteArray());
+        /* cria um arquivo dicionario com o alfabeto passado por parametro */
+        encodeDicionario(alfabeto);
+
+        Map<Integer, Integer> alfabeto2 = decodeDicionario();
+
         byte[] ans = Files.readAllBytes(Paths.get(encode.getAbsolutePath()));
         BitSet newBS = BitSet.valueOf(ans);
         int q = 0, j;
+        t = 0;
         String novaString = "";
         while (q < newBS.length()) {
             bsD = new BitSet();
@@ -166,7 +166,7 @@ public class EliasGammaCoding {
             q += t;
             d = egDecode(bsD);
 
-            for (Map.Entry<Integer, Integer> entry : alfabeto.entrySet()) {
+            for (Map.Entry<Integer, Integer> entry : alfabeto2.entrySet()) {
                 int k = entry.getKey();
                 Integer v = entry.getValue();
                 if (v == d) {
@@ -176,6 +176,78 @@ public class EliasGammaCoding {
             }
         }
         System.out.println(novaString);
+    }
+
+    private static String lerArquivo(Path path) throws IOException {
+        Stream<String> linhas = Files.lines(path);
+        String dadosArquivo = "";
+        for (Object linha : linhas.toArray()) {
+            dadosArquivo += linha.toString();
+        }
+        return dadosArquivo;
+    }
+
+    private static void encodeDicionario(Map<Integer, Integer> dicionario) throws FileNotFoundException, IOException {
+        FileOutputStream inD = new FileOutputStream(new File(PATH_ARQUIVO_CODIFICADO_DICIONARIO));
+        BitSet bsDic = new BitSet();
+        int t = 0, p = 0;
+        for (Map.Entry<Integer, Integer> entry : dicionario.entrySet()) {
+            Integer k = entry.getKey();
+            Integer v = entry.getValue();
+
+            /*encode key*/
+            BitSet bsD = egEncode(k);
+            t = egSize(k);
+            for (int j = 0; j < t; j++) {
+                bsDic.set(p, bsD.get(j));
+                p++;
+            }
+            /*encode value*/
+            bsD = egEncode(v);
+            t = egSize(v);
+            for (int j = 0; j < t; j++) {
+                bsDic.set(p, bsD.get(j));
+                p++;
+            }
+        }
+        inD.write(bsDic.toByteArray());
+    }
+
+    private static Map<Integer, Integer> decodeDicionario() throws IOException {
+        File dicionario = new File(PATH_ARQUIVO_CODIFICADO_DICIONARIO);
+        byte[] ans = Files.readAllBytes(Paths.get(dicionario.getAbsolutePath()));
+        BitSet newBS = BitSet.valueOf(ans);
+        /* percorrer bitset adicionando no dicionario primeiro o valor, depois a chave */
+        Map<Integer, Integer> result = new HashMap<Integer, Integer>();
+        int q = 0, j, t = 0;
+        Integer valorValor = null, valorChave = null;
+        while (q < newBS.length()) {
+            BitSet bsD = new BitSet();
+            j = newBS.nextSetBit(q) - q;
+            if (j == 0) {
+                t = 2;
+            } else {
+                t = j * 2 + 1;
+            }
+            for (int k = 0; k < t; k++) {
+                bsD.set(k, newBS.get(q + k));
+            }
+            q += t;
+            if (valorChave == null) {
+                valorChave = egDecode(bsD);
+                continue;
+            }
+
+            if (valorValor == null) {
+                valorValor = egDecode(bsD);
+            }
+            if (valorValor != null && valorChave != null) {
+                result.put(valorChave, valorValor);
+                valorValor = null;
+                valorChave = null;
+            }
+        }
+        return result;
     }
 
     static class ValueComparator implements Comparator<Integer> {
