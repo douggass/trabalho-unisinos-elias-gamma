@@ -116,68 +116,6 @@ public class EliasGammaCoding {
         return result;
     }
 
-    public static void main(String[] args) throws IOException {
-        Path teste = Paths.get(new File(PATH_ARQUIVO_NAO_CODIFICADO).getAbsolutePath());
-        String dadosArquivo = lerArquivo(teste);
-
-        int i, d, t, p = 0;
-        BitSet bsD = new BitSet(), bsEAN = new BitSet();
-
-        Map<Integer, Integer> alfabeto = criarAlfabeto(dadosArquivo);
-        System.out.println(alfabeto);
-
-        for (i = 0; i < dadosArquivo.length(); i++) {
-            Integer k = (int) dadosArquivo.charAt(i);
-            d = alfabeto.get(k);
-
-            bsD = egEncode(d);
-            t = egSize(d);
-            for (int j = 0; j < t; j++) {
-                bsEAN.set(p, bsD.get(j));
-                p++;
-            }
-        }
-
-        File encode = new File(PATH_ARQUIVO_CODIFICADO);
-        FileOutputStream in = new FileOutputStream(encode);
-        in.write(bsEAN.toByteArray());
-
-        /* cria um arquivo dicionario com o alfabeto passado por parametro */
-        encodeDicionario(alfabeto);
-
-        Map<Integer, Integer> alfabeto2 = decodeDicionario();
-
-        byte[] ans = Files.readAllBytes(Paths.get(encode.getAbsolutePath()));
-        BitSet newBS = BitSet.valueOf(ans);
-        int q = 0, j;
-        t = 0;
-        String novaString = "";
-        while (q < newBS.length()) {
-            bsD = new BitSet();
-            j = newBS.nextSetBit(q) - q;
-            if (j == 0) {
-                t = 2;
-            } else {
-                t = j * 2 + 1;
-            }
-            for (int k = 0; k < t; k++) {
-                bsD.set(k, newBS.get(q + k));
-            }
-            q += t;
-            d = egDecode(bsD);
-
-            for (Map.Entry<Integer, Integer> entry : alfabeto2.entrySet()) {
-                int k = entry.getKey();
-                Integer v = entry.getValue();
-                if (v == d) {
-                    novaString += (char) k;
-                    break;
-                }
-            }
-        }
-        System.out.println(novaString);
-    }
-
     private static String lerArquivo(Path path) throws IOException {
         Stream<String> linhas = Files.lines(path);
         String dadosArquivo = "";
@@ -266,6 +204,68 @@ public class EliasGammaCoding {
             }
         }
 
+    }
+
+    public static void main(String[] args) throws IOException {
+        Path teste = Paths.get(new File(PATH_ARQUIVO_NAO_CODIFICADO).getAbsolutePath());
+        String dadosArquivo = lerArquivo(teste);
+
+        int i, d, t, p = 0;
+        BitSet bsD = new BitSet(), bsEAN = new BitSet();
+
+        Map<Integer, Integer> alfabeto = criarAlfabeto(dadosArquivo);
+        System.out.println(alfabeto);
+
+        for (i = 0; i < dadosArquivo.length(); i++) {
+            Integer k = (int) dadosArquivo.charAt(i);
+            d = alfabeto.get(k);
+
+            bsD = egEncode(d);
+            t = egSize(d);
+            for (int j = 0; j < t; j++) {
+                bsEAN.set(p, bsD.get(j));
+                p++;
+            }
+        }
+
+        File encode = new File(PATH_ARQUIVO_CODIFICADO);
+        FileOutputStream in = new FileOutputStream(encode);
+        in.write(bsEAN.toByteArray());
+
+        /* cria um arquivo dicionario com o alfabeto passado por parametro */
+        encodeDicionario(alfabeto);
+
+        Map<Integer, Integer> alfabeto2 = decodeDicionario();
+
+        byte[] ans = Files.readAllBytes(Paths.get(encode.getAbsolutePath()));
+        BitSet newBS = BitSet.valueOf(ans);
+        int q = 0, j;
+        t = 0;
+        String novaString = "";
+        while (q < newBS.length()) {
+            bsD = new BitSet();
+            j = newBS.nextSetBit(q) - q;
+            if (j == 0) {
+                t = 2;
+            } else {
+                t = j * 2 + 1;
+            }
+            for (int k = 0; k < t; k++) {
+                bsD.set(k, newBS.get(q + k));
+            }
+            q += t;
+            d = egDecode(bsD);
+
+            for (Map.Entry<Integer, Integer> entry : alfabeto2.entrySet()) {
+                int k = entry.getKey();
+                Integer v = entry.getValue();
+                if (v == d) {
+                    novaString += (char) k;
+                    break;
+                }
+            }
+        }
+        System.out.println(novaString);
     }
 
 }
