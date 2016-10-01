@@ -181,6 +181,7 @@ public class EliasGammaCoding {
             }
             if (valorValor != null && valorChave != null) {
                 result.put(valorChave, valorValor);
+                System.out.println("(decimal)" + valorValor + ": (bitys)" + bitSetSequence(egEncode(valorValor), egSize(valorValor)));
                 valorValor = null;
                 valorChave = null;
             }
@@ -211,7 +212,7 @@ public class EliasGammaCoding {
         String dadosArquivo = lerArquivo(teste);
 
         int i, d, t, p = 0;
-        BitSet bsD = new BitSet(), bsEAN = new BitSet();
+        BitSet bsD = new BitSet(), bsCodificado = new BitSet();
 
         Map<Integer, Integer> alfabeto = criarAlfabeto(dadosArquivo);
         System.out.println(alfabeto);
@@ -223,14 +224,14 @@ public class EliasGammaCoding {
             bsD = egEncode(d);
             t = egSize(d);
             for (int j = 0; j < t; j++) {
-                bsEAN.set(p, bsD.get(j));
+                bsCodificado.set(p, bsD.get(j));
                 p++;
             }
         }
 
         File encode = new File(PATH_ARQUIVO_CODIFICADO);
         FileOutputStream in = new FileOutputStream(encode);
-        in.write(bsEAN.toByteArray());
+        in.write(bsCodificado.toByteArray());
 
         /* cria um arquivo dicionario com o alfabeto passado por parametro */
         encodeDicionario(alfabeto);
