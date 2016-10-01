@@ -181,7 +181,7 @@ public class EliasGammaCoding {
             }
             if (valorValor != null && valorChave != null) {
                 result.put(valorChave, valorValor);
-                System.out.println("(decimal)" + valorValor + ": (bitys)" + bitSetSequence(egEncode(valorValor), egSize(valorValor)));
+                System.out.println("(decimal)" + valorValor + ": (byte)" + bitSetSequence(egEncode(valorValor), egSize(valorValor)));
                 valorValor = null;
                 valorChave = null;
             }
