@@ -8,17 +8,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.BitSet;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
 public class EliasGammaCoding {
 
-    static final String PATH_ARQUIVO_CODIFICADO = "C://leia//encode";
-    static final String PATH_ARQUIVO_NAO_CODIFICADO = "C://leia//teste.txt";
-    static final String PATH_ARQUIVO_CODIFICADO_DICIONARIO = "C://leia//dicionario";
+    static String PATH_ARQUIVO_NAO_CODIFICADO;
+    static String PATH_ARQUIVO_CODIFICADO;
+    static String PATH_ARQUIVO_CODIFICADO_DICIONARIO;
 
     public static String bitSetSequence(BitSet bs, int t) {
         String s = "";
@@ -147,6 +147,7 @@ public class EliasGammaCoding {
                 bsDic.set(p, bsD.get(j));
                 p++;
             }
+            System.out.println("Caracter " + (char) k.intValue() + " representadado por " + v + ": (byte)" + bitSetSequence(bsD, t));
         }
         inD.write(bsDic.toByteArray());
     }
@@ -181,7 +182,6 @@ public class EliasGammaCoding {
             }
             if (valorValor != null && valorChave != null) {
                 result.put(valorChave, valorValor);
-                System.out.println("Caracter " + (char)valorChave.intValue() + " representada por " + valorValor + ": (byte)" + bitSetSequence(egEncode(valorValor), egSize(valorValor)));
                 valorValor = null;
                 valorChave = null;
             }
@@ -189,25 +189,7 @@ public class EliasGammaCoding {
         return result;
     }
 
-    static class ValueComparator implements Comparator<Integer> {
-
-        Map<Integer, Integer> base;
-
-        public ValueComparator(Map<Integer, Integer> base) {
-            this.base = base;
-        }
-
-        public int compare(Integer a, Integer b) {
-            if (base.get(a) >= base.get(b)) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
-
-    }
-
-    public static void main(String[] args) throws IOException {
+    private static void encode() throws IOException {
         Path teste = Paths.get(new File(PATH_ARQUIVO_NAO_CODIFICADO).getAbsolutePath());
         String dadosArquivo = lerArquivo(teste);
 
@@ -215,7 +197,6 @@ public class EliasGammaCoding {
         BitSet bsD = new BitSet(), bsCodificado = new BitSet();
 
         Map<Integer, Integer> alfabeto = criarAlfabeto(dadosArquivo);
-        System.out.println(alfabeto);
 
         for (i = 0; i < dadosArquivo.length(); i++) {
             Integer k = (int) dadosArquivo.charAt(i);
@@ -232,19 +213,20 @@ public class EliasGammaCoding {
         File encode = new File(PATH_ARQUIVO_CODIFICADO);
         FileOutputStream in = new FileOutputStream(encode);
         in.write(bsCodificado.toByteArray());
-
         /* cria um arquivo dicionario com o alfabeto passado por parametro */
         encodeDicionario(alfabeto);
 
-        Map<Integer, Integer> alfabeto2 = decodeDicionario();
+    }
 
-        byte[] ans = Files.readAllBytes(Paths.get(encode.getAbsolutePath()));
+    private static String decode() throws IOException {
+        Map<Integer, Integer> alfabeto2 = decodeDicionario();
+        byte[] ans = Files.readAllBytes(Paths.get(PATH_ARQUIVO_CODIFICADO));
         BitSet newBS = BitSet.valueOf(ans);
         int q = 0, j;
-        t = 0;
+        int t = 0;
         String novaString = "";
         while (q < newBS.length()) {
-            bsD = new BitSet();
+            BitSet bsD = new BitSet();
             j = newBS.nextSetBit(q) - q;
             if (j == 0) {
                 t = 2;
@@ -255,7 +237,7 @@ public class EliasGammaCoding {
                 bsD.set(k, newBS.get(q + k));
             }
             q += t;
-            d = egDecode(bsD);
+            int d = egDecode(bsD);
 
             for (Map.Entry<Integer, Integer> entry : alfabeto2.entrySet()) {
                 int k = entry.getKey();
@@ -266,7 +248,45 @@ public class EliasGammaCoding {
                 }
             }
         }
-        System.out.println(novaString);
+        return novaString;
     }
 
+    public static void main(String[] args) throws IOException {
+        Boolean loop = true;
+        while (loop) {
+            Scanner entrada = new Scanner(System.in);
+            System.out.println("1 - Codificar aqruivo");
+            System.out.println("2 - Decodificar arquivo");
+            System.out.println("3 - Exit");
+            int escolha = entrada.nextInt();
+
+            if (escolha == 3) {
+                loop = false;
+                continue;
+            }
+
+            String fazer = (escolha == 1) ? " codificado" : " decodificado";
+            System.out.println("Informe o caminho absoluto do arquivo que deve ser " + fazer + ": ");
+            entrada = new Scanner(System.in);
+
+            switch (escolha) {
+                case 1:
+                    PATH_ARQUIVO_NAO_CODIFICADO = entrada.nextLine();
+                    File aquivoNaoCodificado = new File(PATH_ARQUIVO_NAO_CODIFICADO);
+                    PATH_ARQUIVO_CODIFICADO = aquivoNaoCodificado.getParent() + File.separator + "encode";
+                    PATH_ARQUIVO_CODIFICADO_DICIONARIO = aquivoNaoCodificado.getParent() + File.separator + "dicionario";
+                    encode();
+                    System.out.println("Foi gerado o arquivo: " + PATH_ARQUIVO_CODIFICADO + " e " + PATH_ARQUIVO_CODIFICADO_DICIONARIO);
+                    break;
+
+                case 2:
+                    PATH_ARQUIVO_CODIFICADO = entrada.nextLine();
+                    File aquivoCodificado = new File(PATH_ARQUIVO_CODIFICADO);
+                    PATH_ARQUIVO_CODIFICADO_DICIONARIO = aquivoCodificado.getParent() + File.separator + "dicionario";
+                    System.out.println(decode());
+                    break;
+            }
+
+        }
+    }
 }
